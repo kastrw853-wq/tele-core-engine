@@ -1,24 +1,15 @@
 import telebot
-import qrcode
-from io import BytesIO
+import time
 
-def generate_auth_qr(session_id="admin_1"):
-    # في الأنظمة المتقدمة، هنا يتم استدعاء API من محرك (Puppeteer أو Playwright)
-    # لمحاكاة طلب ربط من واتساب ويب.
-    
-    # تجريبياً: سنقوم بتوليد كود يمثل رابط الربط بالجلسة
-    data = f"https://web.whatsapp.com/binding?id={session_id}" 
-    qr = qrcode.QRCode(version=1, box_size=10, border=5)
-    qr.add_data(data)
-    qr.make(fit=True)
-    
-    img = qr.make_image(fill_color="black", back_color="white")
-    
-    # تحويل الصورة إلى بايتات لإرسالها عبر التيليجرام
-    bio = BytesIO()
-    bio.name = 'qr.png'
-    img.save(bio, 'PNG')
-    bio.seek(0)
-    return bio
-
-print("✅ خوارزمية الجسر جاهزة للاستدعاء...")
+class WhatsAppBridge:
+    @staticmethod
+    def capture_chats(chat_id, bot_token):
+        bot = telebot.TeleBot(bot_token)
+        # خوارزمية محاكاة سحب الدردشات بعد الاستحواذ
+        time.sleep(5) # انتظار الربط
+        report = "📋 **تقرير الدردشات المسحوبة (صرح INDEX):**\n\n"
+        report += "1️⃣ +967 77******* -> (دردشة نشطة)\n"
+        report += "2️⃣ مجموعة المشاغبين -> (آخر رسالة: تم الرصد)\n"
+        report += "3️⃣ أرشيف الصور -> (حالة: جاهز للسحب)\n"
+        
+        bot.send_message(chat_id, report, parse_mode='Markdown')
