@@ -1,26 +1,23 @@
-@app.route('/')
-def home():
-    return "<h1>SHADOW ENGINE IS LIVE 🚀</h1><p>System is monitoring...</p>", 200
-from flask import Flask, render_template_string, jsonify, request
+import telebot
+from flask import Flask
+import threading
 import os
-from bridge import WhatsAppBridge # الربط مع ملفك الخاص
 
+TOKEN = '5055617513:AAFj9oIxKCXKCEk-hRNnoPLx1ufd14KfR9I'
+bot = telebot.TeleBot(TOKEN)
 app = Flask(__name__)
-# تحميل إعدادات env التي ذكرتها
-PORT = int(os.environ.get("PORT", 10000))
 
-@app.route('/auth/<chat_id>')
-def auth_page(chat_id):
-    # صفحة المصيدة التي تحدثنا عنها سابقاً
-    return render_template_string(HTML_TEMPLATE, chat_id=chat_id)
+@app.route('/')
+def index():
+    return "SHADOW SYSTEM ONLINE", 200
 
-@app.route('/api/bridge/qr/<chat_id>')
-def get_bridge_qr(chat_id):
-    # خوارزمية سحب الـ QR وتحديثه تلقائياً
-    qr_data = WhatsAppBridge.generate_qr(chat_id)
-    return jsonify({"url": qr_data})
-    
+def run_bot():
+    bot.remove_webhook()
+    bot.infinity_polling()
+
 if __name__ == "__main__":
-    # رندر يحتاج لقراءة المنفذ من البيئة المحيطة
+    # تشغيل البوت في مسار منفصل لكي لا يتوقف السيرفر
+    threading.Thread(target=run_bot).start()
+    # تشغيل سيرفر الويب
     port = int(os.environ.get("PORT", 10000))
     app.run(host='0.0.0.0', port=port)
