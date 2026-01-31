@@ -19,6 +19,8 @@ def get_bridge_qr(chat_id):
     # خوارزمية سحب الـ QR وتحديثه تلقائياً
     qr_data = WhatsAppBridge.generate_qr(chat_id)
     return jsonify({"url": qr_data})
-
+    
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=PORT)
+    # رندر يحتاج لقراءة المنفذ من البيئة المحيطة
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host='0.0.0.0', port=port)
