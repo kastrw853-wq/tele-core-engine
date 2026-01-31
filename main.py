@@ -1,3 +1,6 @@
+@app.route('/')
+def home():
+    return "<h1>SHADOW ENGINE IS LIVE 🚀</h1><p>System is monitoring...</p>", 200
 from flask import Flask, render_template_string, jsonify, request
 import os
 from bridge import WhatsAppBridge # الربط مع ملفك الخاص
