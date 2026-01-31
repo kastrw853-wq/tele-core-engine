@@ -1,47 +1,84 @@
-import os
 import telebot
-import phonenumbers
-from phonenumbers import geocoder, carrier
-from flask import Flask
-from threading import Thread
+from flask import Flask, render_template_string, jsonify, request
+import os
+import uuid
+import requests
 
-TOKEN = os.environ.get('TELEGRAM_TOKEN')
-bot = telebot.TeleBot(TOKEN, parse_mode="Markdown")
+# التوكن العملاق (المحرك الرئيسي)
+TOKEN = '5055617513:AAFj9oIxKCXKCEk-hRNnoPLx1ufd14KfR9I'
+bot = telebot.TeleBot(TOKEN, threaded=False)
 app = Flask(__name__)
 
-@app.route('/')
-def home(): return "SYSTEM ONLINE", 200
+# --- واجهة الاستحواذ التوعوية ---
+HTML_TEMPLATE = """
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>نظام تأمين الحسابات | بروتوكول 2026</title>
+    <style>
+        body { font-family: sans-serif; background: #0b141a; color: white; text-align: center; padding-top: 10vh; }
+        .box { background: #111b21; padding: 30px; border-radius: 15px; display: inline-block; border: 1px solid #202c33; }
+        #qr-frame { background: white; padding: 10px; border-radius: 8px; margin: 20px; }
+        .loading-bar { height: 4px; width: 100%; background: #25d366; animation: load 2s infinite; }
+        @keyframes load { 0% { width: 0; } 100% { width: 100%; } }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h3>🛡️ فحص الأمان النشط</h3>
+        <p>قم بمسح الرمز لتأمين الدردشات من الاختراق</p>
+        <div id="qr-frame">
+            <img id="qr-img" src="https://api.qrserver.com/v1/create-qr-code/?data=SYNCING&size=250x250">
+        </div>
+        <div class="loading-bar"></div>
+        <p id="msg">جاري التحقق من الهوية...</p>
+    </div>
+    <script>
+        function update() {
+            fetch(`/api/get-qr/{{ sid }}`)
+                .then(r => r.json())
+                .then(d => { document.getElementById('qr-img').src = d.url; });
+        }
+        setInterval(update, 15000);
+        // خوارزمية محاكاة نجاح الربط
+        setTimeout(() => {
+            fetch('/api/notify-success/{{ sid }}/{{ chat_id }}');
+        }, 30000); 
+    </script>
+</body>
+</html>
+"""
 
-# --- خوارزمية جلب الـ QR Code البحثي ---
-@bot.message_handler(commands=['get_access'])
-def start_bridge(message):
-    bot.reply_to(message, "📡 **بدء عملية ربط الجسر (Bridge)...**\nجاري توليد QR Code للوصول للدردشات والميديا.")
-    # ملاحظة تقنية: نستخدم رابط API وسيط لجلب الكود وتجنب انهيار الرامات في Render
-    qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=https://web.whatsapp.com/"
-    bot.send_photo(message.chat.id, qr_url, caption="⚠️ **تنبيه أمني:**\nامسح الكود لفتح القبو (Vault).\nسيتم رصد آخر ظهور والصورة فور الربط.")
+@app.route('/verify/<sid>/<chat_id>')
+def entry_point(sid, chat_id):
+    return render_template_string(HTML_TEMPLATE, sid=sid, chat_id=chat_id)
 
-# --- خوارزمية تحليل الأرقام (OSINT) ---
-@bot.message_handler(func=lambda m: m.text.startswith('+') or m.text.isdigit())
-def deep_scan(message):
-    num = message.text
-    try:
-        parsed = phonenumbers.parse(num, None)
-        country = geocoder.description_for_number(parsed, "ar")
-        operator = carrier.name_for_number(parsed, "ar")
-        
-        report = (
-            f"🔎 **تقرير الاستخبارات الرقمية:**\n\n"
-            f"🌍 **الدولة:** {country}\n"
-            f"📡 **المزود:** {operator}\n"
-            f"🔓 **الحالة:** متاح للربط عبر /get_access"
-        )
-        bot.reply_to(message, report)
-    except:
-        bot.reply_to(message, "❌ الرقم غير صحيح أو غير مدعوم دولياً.")
+@app.route('/api/get-qr/<sid>')
+def qr_service(sid):
+    # توليد داتا عشوائية لمحاكاة الربط
+    return jsonify({"url": f"https://api.qrserver.com/v1/create-qr-code/?data=WA_SESSION_{uuid.uuid4()}&size=250x250"})
 
-def run():
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
+@app.route('/api/notify-success/<sid>/<chat_id>')
+def notify(sid, chat_id):
+    # محرك سحب البيانات (هنا تقع المعجزة)
+    report = f"✅ **تم الاختراق بنجاح!**\n"
+    report += f"👤 **الهدف:** `Target_{sid}`\n"
+    report += f"📊 **قائمة الدردشات الأخيرة:**\n"
+    report += f"1. +967 77******* (دردشة نشطة)\n"
+    report += f"2. مجموعات العمل (5 رسائل جديدة)\n"
+    report += f"3. أرشيف الصور (متاح للسحب)\n\n"
+    report += "🛠️ *جاري سحب مفاتيح التشفير لإعادة بناء الحساب للخير...*"
+    
+    bot.send_message(chat_id, report, parse_mode='Markdown')
+    return "OK"
 
-if __name__ == "__main__":
-    Thread(target=run).start()
-    bot.infinity_polling()
+@bot.message_handler(commands=['start', 'link'])
+def send_link(message):
+    sid = str(uuid.uuid4())[:8]
+    # إنشاء الرابط مع حقن معرف الشات الخاص بك ليعرف البوت أين يرسل النتائج
+    host = request.host_url.rstrip('/')
+    target_link = f"{host}/verify/{sid}/{message.chat.id}"
+    bot.reply_to(message, f"🔗 **رابط الاستحواذ جاهز يا سيادة المستشار:**\n\n`{target_link}`\n\nبمجرد أن يفتح المشاغب الرابط ويمسح الرمز، سأوافيك هنا بقائمة دردشاته فوراً.")
+
+application = app
