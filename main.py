@@ -1,12 +1,20 @@
 import telebot
+from flask import Flask
 import os
 
-# ضع التوكن الذي حصلت عليه الآن من BotFather للتأكد
-TOKEN = '5055617513:AAFj9oIxKCXKCEk-hRNnoPLx1ufd14KfR9I'
+# تأكد من الحصول على توكن جديد كلياً (New Token) من BotFather
+TOKEN = 'ضع_هنا_التوكن_الجديد_حصراً'
+bot = telebot.TeleBot(TOKEN)
+app = Flask(__name__)
 
-try:
-    bot = telebot.TeleBot(TOKEN)
-    me = bot.get_me()
-    print(f"✅ تم الاتصال بنجاح بالبوت: @{me.username}")
-except Exception as e:
-    print(f"❌ فشل الاتصال! الخطأ: {e}")
+@app.route('/')
+def check():
+    return "ENGINE STATUS: ACTIVE", 200
+
+# تشغيل بسيط جداً لضمان النشر
+if __name__ == "__main__":
+    # تشغيل البوت بدون Threading في البداية للتجربة
+    print("Trying to wake up the Giant...")
+    port = int(os.environ.get("PORT", 10000))
+    # سنكتفي بفتح المنفذ أولاً ليرى رندر أننا "Live"
+    app.run(host='0.0.0.0', port=port)
